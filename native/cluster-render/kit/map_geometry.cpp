@@ -28,6 +28,8 @@ QuadRect map_quad(uint32_t scene_w, uint32_t scene_h, uint32_t tex_w, uint32_t t
 
 const char *texture_size_error(uint32_t tex_w, uint32_t tex_h)
 {
+    if (tex_w == 0 && tex_h == 0)
+        return nullptr;   /* auto: use native stream size */
     if (tex_w < 64 || tex_h < 32)
         return "texture smaller than 64x32";
     if (tex_w % 2 || tex_h % 2)

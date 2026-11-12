@@ -69,6 +69,8 @@ public:
     int hud_offset_y() const { return base_.hud_offset_y; }
     /* The cluster map layer's guide_hold. */
     void set_guide_hold(bool hold);
+    /* Update the actual decoded frame size (from VideoProducer). */
+    void set_frame_size(uint32_t w, uint32_t h);
 
     /* For poll(): one entry per feed, appended. */
     size_t poll_fds(std::vector<pollfd> *fds) const;
@@ -94,6 +96,7 @@ private:
     void follow();
     /* The HUD's copy of the newest picture, when it is due. */
     void feed_hud(int64_t now_ms);
+    void update_layer_sizes();
 
     FeedConfig base_;
     unsigned hud_fps_;
@@ -103,6 +106,7 @@ private:
     uint64_t id_ = 0;   /* the newest frame's */
     bool live_ = false, frozen_ = false;
     Picture picture_ = Picture::None;
+    uint32_t frame_w_ = 0, frame_h_ = 0;
 };
 
 }  // namespace woc

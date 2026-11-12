@@ -141,6 +141,9 @@ public:
     }
     /* When the last frame of the decode size was decoded; -1 for none. */
     int64_t last_frame_ms() const { return last_frame_ms_.load(); }
+    /* The current decoded frame size (0 if no frame yet). */
+    uint32_t decoded_width() const { return back_w_; }
+    uint32_t decoded_height() const { return back_h_; }
     /* The last minute's pictures of the decode size, how many of them
      * changed and whether the last was blank (FrameTally), once a minute
      * while pictures come, with the stream's losses and corrupted frames,

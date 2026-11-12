@@ -43,6 +43,8 @@ void MapFeeds::follow()
          * share is in debt: no packing on the renderer's thread for the HUD */
         fc.video.pan_blocks = false;
         hud_.reset(new MapFeed(fc));
+        if (frame_w_ && frame_h_)
+            hud_->update_video_size(frame_w_, frame_h_);
         hud_->set_stream(live_, frozen_, picture_);
         hud_->changed(id_);
         log_info("hud: on, at most %u frames a second", hud_fps_);
@@ -52,6 +54,8 @@ void MapFeeds::follow()
          * KOMBI shows its own content again */
         if (cluster_on_) {
             cluster_.reset(new MapFeed(base_));
+            if (frame_w_ && frame_h_)
+                cluster_->update_video_size(frame_w_, frame_h_);
             cluster_->set_stream(live_, frozen_, picture_);
             if (hud_ && hud_->latest(&copy_))
                 cluster_->hold(&copy_, id_);
@@ -239,6 +243,25 @@ void MapFeeds::request_report()
 std::string MapFeeds::report() const
 {
     return (cluster_ ? cluster_->report() : std::string()) + (hud_ ? "--- hud\n" + hud_->report() : std::string());
+}
+
+void MapFeeds::set_frame_size(uint32_t w, uint32_t h)
+{
+    if (frame_w_ == w && frame_h_ == h)
+        return;
+    frame_w_ = w;
+    frame_h_ = h;
+    update_layer_sizes();
+}
+
+void MapFeeds::update_layer_sizes()
+{
+    if (!frame_w_ || !frame_h_)
+        return;
+    if (cluster_)
+        cluster_->update_video_size(frame_w_, frame_h_);
+    if (hud_)
+        hud_->update_video_size(frame_w_, frame_h_);
 }
 
 }  // namespace woc

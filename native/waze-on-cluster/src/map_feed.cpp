@@ -242,6 +242,21 @@ void MapFeed::set_guide_hold(bool hold)
     }
 }
 
+void MapFeed::update_video_size(uint32_t w, uint32_t h)
+{
+    if (cfg_.video.w == w && cfg_.video.h == h)
+        return;
+    cfg_.video.w = w;
+    cfg_.video.h = h;
+    log_info("render: decoded frame size updated to %ux%u", w, h);
+    if (layer_ && client_.connected()) {
+        keep_newest();
+        client_.drop(layer_);
+        layer_ = 0;
+        make_layer();
+    }
+}
+
 void MapFeed::poll(int64_t now_ms)
 {
     client_.poll(now_ms);

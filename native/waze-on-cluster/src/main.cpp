@@ -203,7 +203,9 @@ int serve(Config cfg)
         log_error("tex_size must be WxH");
         return 1;
     }
-    if (const char *e = texture_size_error(vc.tex_width, vc.tex_height)) {
+    if (vc.tex_width == 0 && vc.tex_height == 0) {
+        log_info("tex_size 0x0: using native stream size");
+    } else if (const char *e = texture_size_error(vc.tex_width, vc.tex_height)) {
         log_error("tex_size %ux%u: %s", vc.tex_width, vc.tex_height, e);
         return 1;
     }
@@ -274,7 +276,9 @@ int serve(Config cfg)
     fc.video.level_bits = 0;   /* rounded in the decoder's packing (video_producer.h) */
     fc.video.dirty_threshold = (unsigned)cfg.num("dirty_threshold");
     fc.video.settle_ms = (unsigned)cfg.num("dirty_settle_ms");
-    fc.video.pan_blocks = cfg.num("pan_blocks") == 1 && vc.tex_height % 4 == 0;
+    /* pan_blocks needs a multiple of 4 height for the exact block size.
+     * With native stream size (0x0), we don't know the size upfront. */
+    fc.video.pan_blocks = cfg.num("pan_blocks") == 1 && vc.tex_height != 0 && vc.tex_height % 4 == 0;
     /* The layer's visibility follows the stream (set_stream); the renderer's
      * stall takes it down if the stream's connection outlives its frames. */
     fc.video.stall_ms = (unsigned)cfg.num("idle_ms");
@@ -338,6 +342,13 @@ int serve(Config cfg)
                 feed.repeat(id, now);
             else
                 feed.offer(&frame, id, now);
+            /* Track decoded frame size (when using auto tex_size 0x0). */
+            if (!same) {
+                const uint32_t dw = producer.decoded_width();
+                const uint32_t dh = producer.decoded_height();
+                if (dw && dh)
+                    feed.set_frame_size(dw, dh);
+            }
         }
         if (now - alt_read_ms >= 1000) {
             const AltScreen::State s = cfg.num("alt_screen_port") ? alt.read() : AltScreen::Unknown;

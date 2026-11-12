@@ -200,6 +200,8 @@ public:
      * asked for again once the last request is answered. */
     void request_report();
     const std::string &report() const { return report_; }
+    /* Update the decoded frame size (from producer). Recreates layer if size changes. */
+    void update_video_size(uint32_t w, uint32_t h);
 
 private:
     void make_layer();

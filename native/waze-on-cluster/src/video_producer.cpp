@@ -413,14 +413,15 @@ void VideoProducer::on_frame(const VideoFrame &f, bool late)
             log_info("%s", line.c_str());
         if (catching_up_)
             backlog_.skipped();
-        if (f.w == cfg_.tex_width && f.h == cfg_.tex_height)
-            last_frame_ms_ = now_us() / 1000;
+        /* Track last frame time for any size (native or configured). */
+        last_frame_ms_ = now_us() / 1000;
         decoded_total_++;
         return;
     }
     /* the atlas starts with the luma plane; the same picture again has not
      * changed and is as blank as it was */
-    const bool sized = f.w == cfg_.tex_width && f.h == cfg_.tex_height;
+    const bool is_native_size = cfg_.tex_width == 0 && cfg_.tex_height == 0;
+    const bool sized = is_native_size || (f.w == cfg_.tex_width && f.h == cfg_.tex_height);
     const bool sampled = sized && f.atlas && change_.changed(f.atlas->data());
     const bool changed = sized && f.atlas && (resumed_.exchange(false) || sampled);
     std::lock_guard<std::mutex> lock(frame_mutex_);
